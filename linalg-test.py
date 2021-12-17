@@ -19,4 +19,4 @@ if __name__ == "__main__":
     print(f'{m1} @ {v1} = {m1@v1}')
 
     m4 = Matrix.fromAxisAngle([1,0,0], np.deg2rad(90))
-    print(f'{m4}')
+    print(m4.basis_description())
