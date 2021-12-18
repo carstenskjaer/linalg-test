@@ -12,9 +12,13 @@ class Matrix:
             self.data = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
 
     def fromTranslation(translation):
-        assert((type(translation) == type([]) and len(translation) == 3))
+        assert((type(translation) == Vector) or (type(translation) == type([]) and len(translation) == 3))
+        if type(translation) == type([]):
+            translation = Vector.fromList(translation)
         m = Matrix()
-        m.data[0:3,3] = translation
+        m.data[0][3] = translation.x
+        m.data[1][3] = translation.y
+        m.data[2][3] = translation.z
         return m
 
     def fromAxisAngle(axis, angle_rad):
@@ -28,7 +32,9 @@ class Matrix:
 
         axis.normalize()
         a = math.cos(angle_rad / 2.0)
-        b, c, d = -axis * math.sin(angle_rad / 2.0)
+        b = -axis.x * math.sin(angle_rad / 2.0)
+        c = -axis.y * math.sin(angle_rad / 2.0)
+        d = -axis.z * math.sin(angle_rad / 2.0)
         aa, bb, cc, dd = a * a, b * b, c * c, d * d
         bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
         return Matrix(
@@ -46,7 +52,12 @@ class Matrix:
         return res
 
     def __str__(self):
-        return str(self.data)
+        return ( 
+            f'[{self[(0,0)]:10.7f} {self[(0,1)]:10.7f} {self[(0,2)]:10.7f} {self[(0,3)]:10.7f}\n'
+            f' {self[(1,0)]:10.7f} {self[(1,1)]:10.7f} {self[(1,2)]:10.7f} {self[(1,3)]:10.7f}\n'
+            f' {self[(2,0)]:10.7f} {self[(2,1)]:10.7f} {self[(2,2)]:10.7f} {self[(2,3)]:10.7f}\n'
+            f' {self[(3,0)]:10.7f} {self[(3,1)]:10.7f} {self[(3,2)]:10.7f} {self[(3,3)]:10.7f}]'
+            )
 
     def basis_description(self):
         return f'{self}\napplied to [1,0,0]: {self@Vector.fromList([1,0,0])}'
@@ -68,3 +79,8 @@ class Matrix:
             return res
         else:
             assert(False)
+
+    def __getitem__(self, tup_index):
+        assert(type(tup_index) == type(()) and len(tup_index) == 2)
+        i,j = tup_index
+        return self.data[i][j]

@@ -2,6 +2,7 @@ from matrix import Matrix
 from vector import Vector
 import unittest
 import math
+import numpy as np
 
 class Matrix_test(unittest.TestCase):
 
@@ -9,13 +10,25 @@ class Matrix_test(unittest.TestCase):
         m = Matrix()
         for i in range(4):
             for j in range(4):
-                self.assertEqual(m.data[i][j], 1 if i == j else 0)
+                self.assertEqual(m.data[i][j], 1 if i == j else 0, f'default init failed at {i},{j}')
         
         testData = [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]
         m = Matrix(testData)
         for i in range(4):
             for j in range(4):
-                self.assertEqual(m.data[i][j], testData[i][j])
+                self.assertEqual(m.data[i][j], testData[i][j], f'init with list failed at {i},{j}')
+
+    def test_getitem(self):
+        m = Matrix()
+        for i in range(4):
+            for j in range(4):
+                self.assertEqual(m[(i,j)], 1 if i == j else 0, f'getitem default init failed at {i},{j}')
+        
+        testData = [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]
+        m = Matrix(testData)
+        for i in range(4):
+            for j in range(4):
+                self.assertEqual(m[(i,j)], testData[i][j], f'getitem with list init failed at {i},{j}')
 
     def test_isClose(self):
         testData = [[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]
@@ -29,7 +42,7 @@ class Matrix_test(unittest.TestCase):
                 m1 = Matrix(testData)
                 testData[i][j] = -42
                 m2 = Matrix(testData)
-                self.assertFalse(m1.isClose(m2), f'{i},{j} failed')
+                self.assertFalse(m1.isClose(m2), f'isClose with difference at {i},{j} failed')
 
     def test_matmul(self):
         m1 = Matrix([[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]])
@@ -57,6 +70,22 @@ class Matrix_test(unittest.TestCase):
             (10*9+11*10+12*11+12)/w
         )
         self.assertTrue(exp.isClose(m1 @ v))
+
+    def test_fromAxisAngle(self):
+        m = Matrix.fromAxisAngle(Vector(1,0,0),0)
+        self.assertTrue(Matrix().isClose(m))
+        m = Matrix.fromAxisAngle(Vector(0,1,0),np.deg2rad(360))
+        self.assertTrue(Matrix().isClose(m, abs_tol=1e-15))
+        m = Matrix.fromAxisAngle(Vector(0,0,2),np.deg2rad(3*360))
+        self.assertTrue(Matrix().isClose(m, abs_tol=1e-15))
+
+    def test_fromTranslation(self):
+        m = Matrix.fromTranslation([0,0,0])
+        self.assertTrue(Matrix().isClose(m))
+        m = Matrix.fromTranslation(Vector(1,0,0))
+        self.assertTrue(Vector(1,0,0).isClose(m@Vector()))
+        m = Matrix.fromTranslation([1,2,3])
+        self.assertTrue(Vector(1,2,3).isClose(m@Vector()))
 
 
 if __name__ == '__main__':
