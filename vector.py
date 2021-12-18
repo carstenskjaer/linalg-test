@@ -24,7 +24,7 @@ class Vector:
         return False
 
     def __str__(self):
-        return f'[{self.x}, {self.y}, {self.z}]'
+        return f'[{self.x:10.7f}, {self.y:10.7f}, {self.z:10.7f}]'
 
     def isClose(self, other, rel_tol=1e-09, abs_tol=0.0):
         return \

@@ -72,12 +72,33 @@ class Matrix_test(unittest.TestCase):
         self.assertTrue(exp.isClose(m1 @ v))
 
     def test_fromAxisAngle(self):
+        # identity rotations
         m = Matrix.fromAxisAngle(Vector(1,0,0),0)
         self.assertTrue(Matrix().isClose(m))
         m = Matrix.fromAxisAngle(Vector(0,1,0),np.deg2rad(360))
         self.assertTrue(Matrix().isClose(m, abs_tol=1e-15))
         m = Matrix.fromAxisAngle(Vector(0,0,2),np.deg2rad(3*360))
         self.assertTrue(Matrix().isClose(m, abs_tol=1e-15))
+        
+        # axis aligned rotations
+        m = Matrix.fromAxisAngle([1,0,0], np.deg2rad(90))
+        self.assertTrue(Vector(1,0,0).isClose(m@Vector(1,0,0)))
+        self.assertTrue(Vector(0,0,1).isClose(m@Vector(0,1,0)))
+        self.assertTrue(Vector(0,-1,0).isClose(m@Vector(0,0,1)))
+
+        m = Matrix.fromAxisAngle([0,1,0], np.deg2rad(-90))
+        self.assertTrue(Vector(0,0,1).isClose(m@Vector(1,0,0)))
+        self.assertTrue(Vector(0,1,0).isClose(m@Vector(0,1,0)))
+        self.assertTrue(Vector(-1,0,0).isClose(m@Vector(0,0,1)))
+
+        m = Matrix.fromAxisAngle([0,0,1], np.deg2rad(180))
+        self.assertTrue(Vector(-1,0,0).isClose(m@Vector(1,0,0), abs_tol=1e-15))
+        self.assertTrue(Vector(0,-1,0).isClose(m@Vector(0,1,0), abs_tol=1e-15))
+        self.assertTrue(Vector(0,0,1).isClose(m@Vector(0,0,1), abs_tol=1e-15))
+
+        # TODO non-axis aligned rotations
+        #m = Matrix.fromAxisAngle([1,1,1], np.deg2rad(90))
+        pass
 
     def test_fromTranslation(self):
         m = Matrix.fromTranslation([0,0,0])
@@ -86,6 +107,16 @@ class Matrix_test(unittest.TestCase):
         self.assertTrue(Vector(1,0,0).isClose(m@Vector()))
         m = Matrix.fromTranslation([1,2,3])
         self.assertTrue(Vector(1,2,3).isClose(m@Vector()))
+
+    def test_fromEulerAngles(self):
+        m = Matrix.fromEulerAngles(np.deg2rad(90),0,0)
+        self.assertTrue(Matrix.fromAxisAngle([1,0,0], np.deg2rad(90)).isClose(m))
+        m = Matrix.fromEulerAngles(0, np.deg2rad(-90),0)
+        self.assertTrue(Matrix.fromAxisAngle([0,1,0], np.deg2rad(-90)).isClose(m))
+        m = Matrix.fromEulerAngles(0, 0, np.deg2rad(180))
+        self.assertTrue(Matrix.fromAxisAngle([0,0,1], np.deg2rad(180)).isClose(m))
+
+
 
 
 if __name__ == '__main__':

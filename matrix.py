@@ -23,7 +23,7 @@ class Matrix:
 
     def fromAxisAngle(axis, angle_rad):
         """
-        Return the rotation matrix associated with counterclockwise rotation about
+        Return the rotation matrix associated with right-handed rotation about
         the given axis by angle_rad radians.
         """
         assert((type(axis) == Vector) or (type(axis) == type([]) and len(axis) == 3))
@@ -44,6 +44,9 @@ class Matrix:
                 [0,0,0,1]
                 ])
 
+    def fromEulerAngles(x, y, z):
+        return Matrix.fromAxisAngle([1,0,0], x) @ Matrix.fromAxisAngle([0,1,0], y) @ Matrix.fromAxisAngle([0,0,1], z)
+
     def isClose(self, other, rel_tol=1e-09, abs_tol=0.0):
         res = True
         for i in range(4):
@@ -60,7 +63,12 @@ class Matrix:
             )
 
     def basis_description(self):
-        return f'{self}\napplied to [1,0,0]: {self@Vector.fromList([1,0,0])}'
+        return (
+            f'{self}\n'
+            f'applied to [1,0,0]: {self@Vector.fromList([1,0,0])}\n'
+            f'applied to [0,1,0]: {self@Vector.fromList([0,1,0])}\n'
+            f'applied to [0,0,1]: {self@Vector.fromList([0,0,1])}')
+
 
     def __matmul__(self, o):
         if (type(o) == Matrix):

@@ -8,11 +8,11 @@ class Vector_test(unittest.TestCase):
 
     def test_default(self):
         v = Vector()
-        self.assertEquals([0,0,0], [v.x, v.y, v.z])
+        self.assertEqual([0,0,0], [v.x, v.y, v.z])
 
     def test_fromList(self):
         v = Vector.fromList([1,2,3])
-        self.assertEquals([1,2,3], [v.x, v.y, v.z])
+        self.assertEqual([1,2,3], [v.x, v.y, v.z])
 
     def test_getitem(self):
         v = Vector.fromList([1,2,3])
@@ -31,9 +31,9 @@ class Vector_test(unittest.TestCase):
         self.assertEqual(math.sqrt(4**2+3**2+2**2), v.length())
 
     def test_normalize(self):
-        self.assertEquals(Vector(1,0,0), Vector(2,0,0).normalize())
-        self.assertEquals(Vector(0,1,0), Vector(0,2,0).normalize())
-        self.assertEquals(Vector(0,0,1), Vector(0,0,2).normalize())
+        self.assertEqual(Vector(1,0,0), Vector(2,0,0).normalize())
+        self.assertEqual(Vector(0,1,0), Vector(0,2,0).normalize())
+        self.assertEqual(Vector(0,0,1), Vector(0,0,2).normalize())
         v = Vector(3.4, 5.6, 7.8)
         l = v.length()
         self.assertTrue(Vector(v.x/l, v.y/l, v.z/l).isClose(v.normalize()))
