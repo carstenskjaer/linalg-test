@@ -1,13 +1,16 @@
 import sdl2
-
+import math
 from vector import Vector
 
 class CameraController:
     lastUpdateTick = 0
     
     currentPos = Vector(1,1,1)
-    currentLookDir = Vector(-1, -1, -1).normalize()
-    upDir = Vector(0,1,0)
+    currentLookDir = Vector()
+    upDir = Vector(0,0,1)
+
+    lookAngleHorizontal = 180
+    lookAngleVertical = 120
 
     forwardActive = False
     backwardActive = False
@@ -17,8 +20,12 @@ class CameraController:
     downActive = False
     lookActive = False
 
-    horizontalSpeed = 0.2 # /s
-    verticalSpeed = 0.2 # /s
+    lastMouseLookX = 0
+    lastMouseLookY = 0
+
+    horizontalSpeed = 0.5 # unit/s
+    verticalSpeed = 0.5 # unit/s
+    lookSpeed = 0.1 # degrees per mouse movement (pixels)
 
     def update(self):
         now = sdl2.SDL_GetTicks()
@@ -44,8 +51,13 @@ class CameraController:
         pass
 
     def getLookAt(self):
+        self.currentLookDir = Vector(
+            math.sin(math.radians(self.lookAngleVertical))*math.cos(math.radians(self.lookAngleHorizontal)),
+            math.sin(math.radians(self.lookAngleVertical))*math.sin(math.radians(self.lookAngleHorizontal)),
+            math.cos(math.radians(self.lookAngleVertical))
+        )
         return self.currentPos, self.currentPos + self.currentLookDir, self.upDir
-        pass
+
 
     def event(self, event):
         if event.type == sdl2.SDL_WINDOWEVENT:
@@ -58,29 +70,28 @@ class CameraController:
                 self.downActive = False
                 self.lookActive = False
         if event.type == sdl2.SDL_MOUSEBUTTONDOWN:
-            x = event.button.x
-            y = event.button.y
             if event.button.button == sdl2.SDL_BUTTON_LEFT:
-                #print(f'Left mouse down at {x},{y}')
-                lookActive = True
+                self.lastMouseLookX = event.button.x
+                self.lastMouseLookY = event.button.y
+                self.lookActive = True
             if event.button.button == sdl2.SDL_BUTTON_RIGHT:
-                #print(f'Right mouse down at {x},{y}')
                 pass
         if event.type == sdl2.SDL_MOUSEBUTTONUP:
-            x = event.button.x
-            y = event.button.y
             if event.button.button == sdl2.SDL_BUTTON_LEFT:
-                lookActive = False
-                #print(f'Left mouse up at {x},{y}')
+                self.lookActive = False
             if event.button.button == sdl2.SDL_BUTTON_RIGHT:
-                #print(f'Right mouse up at {x},{y}')
                 pass
         if event.type == sdl2.SDL_MOUSEMOTION:
-            x = event.button.x
-            y = event.button.y
-            #print(f'Mouse motion at {x},{y}')
             if self.lookActive:
-                # TODO
+                offsetX = event.button.x - self.lastMouseLookX
+                offsetY = event.button.y - self.lastMouseLookY
+
+                self.lookAngleHorizontal += offsetX * self.lookSpeed
+                self.lookAngleVertical += offsetY * self.lookSpeed
+                self.lookAngleVertical = max(1, min(self.lookAngleVertical, 179))
+
+                self.lastMouseLookX = event.button.x
+                self.lastMouseLookY = event.button.y
                 pass
         if event.type == sdl2.SDL_KEYDOWN:
             if event.key.keysym.scancode == sdl2.SDL_SCANCODE_A:
@@ -108,4 +119,3 @@ class CameraController:
                 self.downActive = False
             if event.key.keysym.scancode == sdl2.SDL_SCANCODE_Q:
                 self.upActive = False
-
