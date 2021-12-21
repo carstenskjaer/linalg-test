@@ -23,8 +23,8 @@ class CameraController:
     lastMouseLookX = 0
     lastMouseLookY = 0
 
-    horizontalSpeed = 0.5 # unit/s
-    verticalSpeed = 0.5 # unit/s
+    horizontalSpeed = 0.7 # unit/s
+    verticalSpeed = 0.7 # unit/s
     lookSpeed = 0.1 # degrees per mouse movement (pixels)
 
     def update(self):
