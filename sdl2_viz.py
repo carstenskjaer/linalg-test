@@ -1,6 +1,8 @@
 import sys
+import os
 import sdl2
 import sdl2.ext
+import sdl2.sdlttf
 from OpenGL import GL, GLU
 import ctypes
 import math
@@ -9,8 +11,10 @@ from frame import Frame
 from camera_controller import CameraController
 from matrix import Matrix
 
+width, height = 1200, 1000
 
-def drawFrame(frame):
+
+def drawFrame(frame, font):
     matrix = frame.getGlobalMatrix()
     GL.glMatrixMode(GL.GL_MODELVIEW)
     GL.glPushMatrix()
@@ -30,7 +34,90 @@ def drawFrame(frame):
     GL.glVertex(0,0,1)
     GL.glEnd()
 
+    RenderText3D(frame.name, font)
+
     GL.glPopMatrix()
+
+
+def CreateTextTexture(text, font):
+    textures = [0]
+    GL.glGenTextures(1, textures)
+    GL.glBindTexture(GL.GL_TEXTURE_2D, textures[0])
+
+    surface = sdl2.sdlttf.TTF_RenderText_Blended(font, str.encode(text), sdl2.SDL_Color(255, 255, 255, 255))
+    
+    GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+    GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+    GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, surface.contents.w, surface.contents.h, 0, GL.GL_BGRA, GL.GL_UNSIGNED_BYTE, ctypes.c_void_p(surface.contents.pixels))
+
+    sdl2.SDL_FreeSurface(surface)
+    return textures[0], surface.contents.w, surface.contents.h
+
+def RenderText2D(text, x, y, font):
+    GL.glMatrixMode(GL.GL_MODELVIEW)
+    GL.glPushMatrix()
+    GL.glLoadIdentity()
+
+    GL.glMatrixMode(GL.GL_PROJECTION)
+    GL.glPushMatrix()
+    GL.glLoadIdentity()
+    GLU.gluOrtho2D(0, width, 0, height); 
+
+    GL.glDisable(GL.GL_DEPTH_TEST)
+    GL.glEnable(GL.GL_TEXTURE_2D)
+    GL.glEnable(GL.GL_BLEND)
+    GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+
+    texture, textureWidth, textureHeight = CreateTextTexture(text, font)
+    GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
+
+    GL.glBegin(GL.GL_QUADS)
+    GL.glColor(1,1,1,1)
+    GL.glTexCoord2f(0,1); GL.glVertex2f(x, y)
+    GL.glTexCoord2f(1,1); GL.glVertex2f(x + textureWidth, y)
+    GL.glTexCoord2f(1,0); GL.glVertex2f(x + textureWidth, y + textureHeight)
+    GL.glTexCoord2f(0,0); GL.glVertex2f(x, y + textureHeight)
+    GL.glEnd()
+    
+    GL.glDisable(GL.GL_BLEND)
+    GL.glDisable(GL.GL_TEXTURE_2D)
+    GL.glEnable(GL.GL_DEPTH_TEST)
+
+    GL.glMatrixMode(GL.GL_PROJECTION)
+    GL.glPopMatrix()
+    GL.glMatrixMode(GL.GL_MODELVIEW)
+    GL.glPopMatrix()
+
+    GL.glDeleteTextures(1, [texture])
+
+def RenderText3D(text, font):
+
+    GL.glEnable(GL.GL_TEXTURE_2D)
+    GL.glEnable(GL.GL_BLEND)
+    GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+
+    texture, textureWidth, textureHeight = CreateTextTexture(text, font)
+    GL.glBindTexture(GL.GL_TEXTURE_2D, texture)
+
+    GL.glPushMatrix()
+    sizeScale = 1/max(textureWidth, textureHeight)
+    GL.glScale(sizeScale, sizeScale, sizeScale)
+
+    GL.glBegin(GL.GL_QUADS)
+    GL.glColor(1,1,1,1)
+    GL.glTexCoord2f(0,1); GL.glVertex2f(0, 0)
+    GL.glTexCoord2f(1,1); GL.glVertex2f(textureWidth, 0)
+    GL.glTexCoord2f(1,0); GL.glVertex2f(textureWidth, textureHeight)
+    GL.glTexCoord2f(0,0); GL.glVertex2f(0, textureHeight)
+    GL.glEnd()
+    
+    GL.glPopMatrix()
+
+    GL.glDisable(GL.GL_BLEND)
+    GL.glDisable(GL.GL_TEXTURE_2D)
+
+    GL.glDeleteTextures(1, [texture])
+
 
 def run():
     camera = CameraController()
@@ -38,19 +125,25 @@ def run():
     frames = []
 
     frame0 = Frame()
+    frame0.name = 'Frame0'
     frame0.localMatrix = Matrix.fromTranslation([-1,0,0])
     frames.append(frame0)
 
     frame1 = Frame()
+    frame1.name = 'Frame1'
     frame1.parent = frame0
     frames.append(frame1)
 
     frame2 = Frame()
+    frame2.name = 'Frame2'
     frame2.parent = frame1
     frame2.localMatrix = Matrix.fromTranslation([0,1,0])
     frames.append(frame2)
 
-    width, height = 1200, 1000
+    sdl2.sdlttf.TTF_Init()
+    font = "Arial"
+    fontpath = os.path.join(os.environ["windir"], "Fonts", font + ".ttf")
+    font = sdl2.sdlttf.TTF_OpenFont(str.encode(fontpath), 24)
 
     sdl2.ext.init()
     window = sdl2.SDL_CreateWindow(
@@ -67,8 +160,8 @@ def run():
         camera.update()
 
         # do the actual drawing
-        GL.glClearColor(0.1, 0.1, 0.1, 1.0)
-        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+        GL.glClearColor(0.2, 0.2, 0.2, 1.0)
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
  
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
@@ -83,7 +176,9 @@ def run():
             up.x, up.y, up.z)
 
         for f in frames:
-            drawFrame(f)
+            drawFrame(f, font)
+
+        #RenderText2D('FOO', 0,0, font)
 
         # show the back buffer
         sdl2.SDL_GL_SwapWindow(window)
@@ -118,7 +213,6 @@ def run():
                         frame1.localMatrix = Matrix.fromAxisAngle([0,0,1], math.radians(sign*5)) @ frame1.localMatrix
                     else:
                         frame1.localMatrix = Matrix.fromTranslation([0,0,sign*0.1]) @ frame1.localMatrix
-
 
     sdl2.SDL_GL_DeleteContext(context)
     sdl2.SDL_Quit()

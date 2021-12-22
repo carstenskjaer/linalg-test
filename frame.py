@@ -3,6 +3,7 @@ from matrix import Matrix
 class Frame:
     parent = None
     localMatrix = Matrix()
+    name = ''
 
     def getGlobalMatrix(self):
         if (self.parent != None):
