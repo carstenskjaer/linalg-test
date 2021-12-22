@@ -3,6 +3,7 @@ import sdl2
 import sdl2.ext
 from OpenGL import GL, GLU
 import ctypes
+import math
 
 from frame import Frame
 from camera_controller import CameraController
@@ -35,9 +36,19 @@ def run():
     camera = CameraController()
 
     frames = []
-    frameTest = Frame()
-    frameTest.localMatrix = Matrix.fromTranslation([0.5,0,0])
-    frames.append(frameTest)
+
+    frame0 = Frame()
+    frame0.localMatrix = Matrix.fromTranslation([-1,0,0])
+    frames.append(frame0)
+
+    frame1 = Frame()
+    frame1.parent = frame0
+    frames.append(frame1)
+
+    frame2 = Frame()
+    frame2.parent = frame1
+    frame2.localMatrix = Matrix.fromTranslation([0,1,0])
+    frames.append(frame2)
 
     width, height = 1200, 1000
 
@@ -71,18 +82,6 @@ def run():
             look.x, look.y, look.z,
             up.x, up.y, up.z)
 
-        GL.glBegin(GL.GL_LINES)
-        GL.glColor(1,0,0,1)
-        GL.glVertex(0,0,0)
-        GL.glVertex(1,0,0)
-        GL.glColor(0,1,0,1)
-        GL.glVertex(0,0,0)
-        GL.glVertex(0,1,0)
-        GL.glColor(0,0,1,1)
-        GL.glVertex(0,0,0)
-        GL.glVertex(0,0,1)
-        GL.glEnd()
-
         for f in frames:
             drawFrame(f)
 
@@ -95,7 +94,31 @@ def run():
             if event.type == sdl2.SDL_QUIT:
                 running = False
                 break
+
             camera.event(event)
+
+            if event.type == sdl2.SDL_KEYDOWN:
+                shift = event.key.keysym.mod & sdl2.KMOD_LSHIFT
+                ctrl = event.key.keysym.mod & sdl2.KMOD_LCTRL
+
+                sign = -1.0 if shift else 1.0
+
+                if event.key.keysym.scancode == sdl2.SDL_SCANCODE_X:
+                    if ctrl:
+                        frame1.localMatrix = Matrix.fromAxisAngle([1,0,0], math.radians(sign*5)) @ frame1.localMatrix
+                    else:
+                        frame1.localMatrix = Matrix.fromTranslation([sign*0.1,0,0]) @ frame1.localMatrix
+                if event.key.keysym.scancode == sdl2.SDL_SCANCODE_Y:
+                    if ctrl:
+                        frame1.localMatrix = Matrix.fromAxisAngle([0,1,0], math.radians(sign*5)) @ frame1.localMatrix
+                    else:
+                        frame1.localMatrix = Matrix.fromTranslation([0,sign*0.1,0]) @ frame1.localMatrix
+                if event.key.keysym.scancode == sdl2.SDL_SCANCODE_Z:
+                    if ctrl:
+                        frame1.localMatrix = Matrix.fromAxisAngle([0,0,1], math.radians(sign*5)) @ frame1.localMatrix
+                    else:
+                        frame1.localMatrix = Matrix.fromTranslation([0,0,sign*0.1]) @ frame1.localMatrix
+
 
     sdl2.SDL_GL_DeleteContext(context)
     sdl2.SDL_Quit()
